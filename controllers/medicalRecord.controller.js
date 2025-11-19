@@ -10,16 +10,17 @@ export const uploadMedicalRecord = async (req, res) => {
     const userId = req.user.id;
 
     if (!req.file) {
-      return res.status(400).json({ msg: 'Please upload a file' });
+      return res.status(400).json({ msg: "Please upload a file" });
     }
 
     const medicalRecord = new MedicalRecord({
       user: userId,
       title: title || req.file.originalname,
-      description: description || '',
-      category: category || 'other',
+      description: description || "",
+      category: category || "other",
+
       fileName: req.file.originalname,
-      filePath: req.file.path,
+      filePath: req.file.path,         // Cloudinary URL
       fileType: req.file.mimetype,
       fileSize: req.file.size
     });
@@ -27,18 +28,16 @@ export const uploadMedicalRecord = async (req, res) => {
     await medicalRecord.save();
 
     res.status(201).json({
-      msg: 'Medical record uploaded successfully',
+      msg: "Medical record uploaded successfully",
       record: medicalRecord
     });
+
   } catch (err) {
-    console.error('Upload error:', err);
-    // Delete uploaded file if database save fails
-    if (req.file) {
-      fs.unlinkSync(req.file.path);
-    }
-    res.status(500).json({ msg: 'Error uploading medical record', error: err.message });
+    console.error("Upload error:", err);
+    res.status(500).json({ msg: "Error uploading medical record", error: err.message });
   }
 };
+
 
 // Get all medical records for user
 export const getMedicalRecords = async (req, res) => {
@@ -83,21 +82,17 @@ export const downloadMedicalRecord = async (req, res) => {
     const record = await MedicalRecord.findOne({ _id: recordId, user: userId });
 
     if (!record) {
-      return res.status(404).json({ msg: 'Record not found' });
+      return res.status(404).json({ msg: "Record not found" });
     }
 
-    const filePath = path.resolve(record.filePath);
+    return res.redirect(record.filePath);
 
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ msg: 'File not found on server' });
-    }
-
-    res.download(filePath, record.fileName);
   } catch (err) {
-    console.error('Download error:', err);
-    res.status(500).json({ msg: 'Error downloading file', error: err.message });
+    console.error("Download error:", err);
+    res.status(500).json({ msg: "Error downloading file", error: err.message });
   }
 };
+
 
 // Delete medical record
 export const deleteMedicalRecord = async (req, res) => {
